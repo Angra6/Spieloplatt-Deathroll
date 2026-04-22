@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -24,17 +23,26 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             text-align: center;
-            width: 380px;
+            width: 400px;
         }
 
-        h1 { color: #e74c3c; margin-top: 0; }
+        h1 { color: #e74c3c; margin-top: 0; margin-bottom: 20px; }
         
-        .input-group {
-            margin-bottom: 1.5rem;
+        .setup-section {
+            background: #333;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             gap: 10px;
+        }
+
+        .input-row {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
+            gap: 10px;
         }
 
         input {
@@ -43,23 +51,25 @@
             color: white;
             padding: 8px;
             border-radius: 5px;
-            width: 80px;
-            font-size: 1rem;
-            text-align: center;
+            font-size: 0.9rem;
         }
 
-        .status { margin-bottom: 1rem; font-size: 1.1rem; color: #bdc3c7; height: 1.2em; }
+        .name-input { flex-grow: 1; }
+        .val-input { width: 80px; text-align: center; }
+
+        .status { margin-bottom: 1rem; font-size: 1.2rem; color: #bdc3c7; height: 1.5em; font-weight: bold; }
 
         .current-roll {
-            font-size: 4.5rem;
+            font-size: 5rem;
             font-weight: bold;
             margin: 0.5rem 0;
             color: #f1c40f;
-            text-shadow: 0 0 15px rgba(241, 196, 15, 0.3);
+            text-shadow: 0 0 15px rgba(241, 196, 15, 0.4);
         }
 
+        .controls { display: flex; flex-direction: column; gap: 10px; }
+
         button {
-            background-color: #e74c3c;
             border: none;
             color: white;
             padding: 15px;
@@ -67,12 +77,14 @@
             border-radius: 8px;
             cursor: pointer;
             transition: 0.2s;
-            width: 100%;
             font-weight: bold;
         }
 
-        button:hover { background-color: #c0392b; }
-        button:disabled { background-color: #555; cursor: not-allowed; }
+        #rollBtn { background-color: #e74c3c; width: 100%; }
+        #rollBtn:hover { background-color: #c0392b; }
+        #rollBtn:disabled { background-color: #555; cursor: not-allowed; }
+
+        #resetBtn { background-color: #34495e; width: 100%; }
 
         .log {
             margin-top: 1.5rem;
@@ -84,36 +96,41 @@
             padding-top: 10px;
             color: #95a5a6;
         }
-
-        .controls { display: flex; flex-direction: column; gap: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Spieloplatt-Deathroll</h1>
+    <h1>Deathroll</h1>
     
-    <div class="input-group" id="setupArea">
-        <span>Startwert:</span>
-        <input type="number" id="startInput" value="1000" min="2">
+    <div class="setup-section" id="setupArea">
+        <div class="input-row">
+            <input type="text" id="p1Name" class="name-input" placeholder="Name Spieler 1">
+            <input type="text" id="p2Name" class="name-input" placeholder="Name Spieler 2">
+        </div>
+        <div class="input-row">
+            <span>Startwert:</span>
+            <input type="number" id="startInput" class="val-input" value="1000" min="2">
+        </div>
     </div>
 
-    <div id="status" class="status">Bereit zum Starten!</div>
+    <div id="status" class="status">Namen eingeben & starten!</div>
     <div id="display" class="current-roll">---</div>
     
     <div class="controls">
         <button id="rollBtn" onclick="playTurn()">WÜRFELN!</button>
-        <button id="resetBtn" onclick="resetGame()" style="background-color: #34495e;">Neues Spiel</button>
+        <button id="resetBtn" onclick="resetGame()">Neues Spiel / Reset</button>
     </div>
 
-    <div id="log" class="log">Gib einen Wert ein und würfle!</div>
+    <div id="log" class="log">Warte auf den ersten Wurf...</div>
 </div>
 
 <script>
     let currentMax = 0;
-    let playerTurn = 1;
+    let playerTurn = 1; // 1 oder 2
     let gameOver = false;
     let isFirstRoll = true;
+    let names = ["Spieler 1", "Spieler 2"];
 
     const display = document.getElementById('display');
     const statusText = document.getElementById('status');
@@ -121,49 +138,64 @@
     const rollBtn = document.getElementById('rollBtn');
     const startInput = document.getElementById('startInput');
     const setupArea = document.getElementById('setupArea');
+    const p1Input = document.getElementById('p1Name');
+    const p2Input = document.getElementById('p2Name');
 
     function playTurn() {
         if (gameOver) return;
 
         
         if (isFirstRoll) {
+            names[0] = p1Input.value.trim() || "Spieler 1";
+            names[1] = p2Input.value.trim() || "Spieler 2";
             currentMax = parseInt(startInput.value) || 1000;
+            
             isFirstRoll = false;
-            setupArea.style.opacity = "0.5";
+            setupArea.style.opacity = "0.4";
+            p1Input.disabled = true;
+            p2Input.disabled = true;
             startInput.disabled = true;
-            log.innerHTML = "Spiel gestartet!";
+            log.innerHTML = "<b>Spiel gestartet!</b>";
         }
 
+        const aktuellerSpielerName = names[playerTurn - 1];
         const roll = Math.floor(Math.random() * currentMax) + 1;
         
         const entry = document.createElement('div');
-        entry.textContent = `S${playerTurn} würfelt ${roll} (max ${currentMax})`;
+        entry.innerHTML = `<b>${aktuellerSpielerName}</b> würfelt <b>${roll}</b> (max ${currentMax})`;
         log.prepend(entry);
 
         display.textContent = roll;
 
         if (roll === 1) {
-            statusText.textContent = `Spieler ${playerTurn} hat verloren! 💀`;
+            statusText.textContent = `${aktuellerSpielerName} hat verloren! 💀`;
             statusText.style.color = "#e74c3c";
             display.style.color = "#e74c3c";
             gameOver = true;
             rollBtn.disabled = true;
         } else {
             currentMax = roll;
-            playerTurn = playerTurn === 1 ? 2 : 1;
-            statusText.textContent = `Spieler ${playerTurn} ist dran`;
+            // Wechsel zwischen 1 und 2
+            playerTurn = (playerTurn === 1) ? 2 : 1;
+            statusText.textContent = `${names[playerTurn - 1]} ist dran`;
+            statusText.style.color = "#f1c40f";
         }
     }
 
     function resetGame() {
         isFirstRoll = true;
         gameOver = false;
+        playerTurn = 1; 
+        
         display.textContent = "---";
         display.style.color = "#f1c40f";
-        statusText.textContent = "Bereit zum Starten!";
+        statusText.textContent = "Bereit für die Revanche?";
         statusText.style.color = "#bdc3c7";
         log.innerHTML = "Neues Spiel vorbereitet.";
+        
         rollBtn.disabled = false;
+        p1Input.disabled = false;
+        p2Input.disabled = false;
         startInput.disabled = false;
         setupArea.style.opacity = "1";
     }
